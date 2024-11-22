@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   map_parser.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ybiloshy <nikolly19.12@gmail.com>          +#+  +:+       +#+        */
+/*   By: ybiloshy <ybiloshy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/11 20:37:04 by ybiloshy          #+#    #+#             */
-/*   Updated: 2024/11/13 22:35:54 by ybiloshy         ###   ########.fr       */
+/*   Updated: 2024/11/21 15:23:07 by ybiloshy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,47 +27,67 @@ void load_map(const char *filename, t_game *game)
 
     fd = fopen(filename, "r");  // Открываем файл карты
     if (fd == NULL)
-        exit_error("Failed to open map file.");
+        exit_error("Error\nFailed to open map file.");
 
-    // Инициализируем карту (пока пустой массив)
-    game->map = NULL;
+    game->map = NULL;  // Инициализируем карту
+    game->total_collectibles = 0; // Инициализируем количество предметов
 
-    // Считываем строки карты с использованием fgets
     while ((read = getline(&line, &len, fd)) != -1) 
     {
-        // Убираем символ новой строки, если он есть
         if (line[read - 1] == '\n')
             line[read - 1] = '\0';
 
-        if (map_cols == 0)  // Устанавливаем количество колонок (ширину карты)
-            map_cols = strlen(line);  // Длина строки без символа новой строки
+        if (map_cols == 0)  // Устанавливаем количество колонок
+            map_cols = strlen(line);
 
-        // Расширяем массив указателей на строки
-        game->map = realloc(game->map, (map_rows + 1) * sizeof(char *));
-        if (game->map == NULL)
-            exit_error("Memory allocation failed for map rows.");
-        
-        game->map[map_rows] = line;  // Сохраняем строку карты
+        // Проверка на realloc
+        char **new_map = realloc(game->map, (map_rows + 1) * sizeof(char *));
+        if (new_map == NULL)
+        {
+            free(game->map);  // Освобождаем старую память, если realloc не удался
+            exit_error("Error\nMemory allocation failed for map rows.");
+        }
+        game->map = new_map;  // Присваиваем новую память
+
+        game->map[map_rows] = line;
         map_rows++;
-        
-        line = NULL;  // Для того чтобы getline выделила новый буфер на следующую строку
+
+        // Подсчёт коллекционных предметов ('C') в текущей строке
+        for (int j = 0; j < map_cols; j++) {
+            if (line[j] == 'C') {
+                game->total_collectibles++;
+            }
+        }
+
+        line = NULL;  // Обнуляем line для следующей строки
     }
 
-    fclose(fd);  // Закрываем файл
+    fclose(fd);
 
-    // Проверка на пустую карту
     if (map_rows == 0 || map_cols == 0)
-        exit_error("Map is empty or invalid.");
+        exit_error("Error\nMap is empty or invalid.");
 
-    // Проверка, что карта замкнута и содержит правильные символы
     validate_map(game->map, map_rows, map_cols);
 
     game->map_rows = map_rows;
     game->map_cols = map_cols;
 
-    // Не забываем освободить память, выделенную для строки после использования
+    // Найдем позицию игрока ('P')
+    for (int i = 0; i < map_rows; i++) {
+        for (int j = 0; j < map_cols; j++) {
+            if (game->map[i][j] == 'P') {
+                game->player_x = j;  // Устанавливаем координаты игрока по оси X
+                game->player_y = i;  // Устанавливаем координаты игрока по оси Y
+                break;
+            }
+        }
+    }
+
     free(line);
 }
+
+
+
 
 void	check_map_closed(char **map, int rows, int cols)
 {
@@ -77,14 +97,14 @@ void	check_map_closed(char **map, int rows, int cols)
     for (i = 0; i < cols; i++)
     {
         if (map[0][i] != '1' || map[rows - 1][i] != '1')
-            exit_error("Map is not surrounded by walls.");
+            exit_error("Error\nMap is not surrounded by walls.");
     }
 
     // Проверка левых и правых границ
     for (i = 0; i < rows; i++)
     {
         if (map[i][0] != '1' || map[i][cols - 1] != '1')
-            exit_error("Map is not surrounded by walls.");
+            exit_error("Error\nMap is not surrounded by walls.");
     }
 }
 
@@ -97,35 +117,49 @@ void check_valid_characters(char **map, int rows, int cols)
         for (j = 0; j < cols; j++)
         {
             if (map[i][j] != '1' && map[i][j] != '0' && map[i][j] != 'C' && map[i][j] != 'E' && map[i][j] != 'P')
-                exit_error("Invalid character in map.");
+                exit_error("Error\nInvalid character in map.");
         }
     }
 }
 
-int count_elements(char **map, char element)
+int count_elements(char **map, int rows, int cols, char element)
 {
-    int i, j;
     int count = 0;
 
-    for (i = 0; map[i]; i++)
-    {
-        for (j = 0; map[i][j]; j++)
-        {
-            if (map[i][j] == element)
+    // Проверка на корректность доступа к карте
+    if (map == NULL || rows <= 0 || cols <= 0) {
+        exit_error("Error\nInvalid map or dimensions.");
+    }
+
+    for (int i = 0; i < rows; i++) {
+        if (map[i] == NULL) {
+            exit_error("Error\nInvalid row in map.");
+        }
+        
+        for (int j = 0; j < cols; j++) {
+            if (map[i][j] == element) {
                 count++;
+            }
         }
     }
+
     return count;
 }
 
 void validate_map(char **map, int rows, int cols)
 {
-    int exit_count = count_elements(map, 'E');
-    int player_count = count_elements(map, 'P');
-    int collectible_count = count_elements(map, 'C');
+    // Проверка на корректность карты и её размеров
+    if (map == NULL || rows <= 0 || cols <= 0) {
+        exit_error("Error\nInvalid map or dimensions.");
+    }
 
-    if (exit_count != 1 || player_count != 1 || collectible_count < 1)
-        exit_error("Map must contain exactly 1 exit, 1 player, and at least 1 collectible.");
+    int exit_count = count_elements(map, rows, cols, 'E');
+    int player_count = count_elements(map, rows, cols, 'P');
+    int collectible_count = count_elements(map, rows, cols, 'C');
+
+    if (exit_count != 1 || player_count != 1 || collectible_count < 1) {
+        exit_error("Error\nMap must contain exactly 1 exit, 1 player, and at least 1 collectible.");
+    }
     
     check_map_closed(map, rows, cols);
     check_valid_characters(map, rows, cols);
