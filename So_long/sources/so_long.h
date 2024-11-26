@@ -6,7 +6,7 @@
 /*   By: ybiloshy <ybiloshy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/12 19:30:51 by ybiloshy          #+#    #+#             */
-/*   Updated: 2024/11/23 17:12:29 by ybiloshy         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:39:29 by ybiloshy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 # include <mlx.h>
 # include "../libraries/Libft/libft.h"
 # include "../libraries/Get_next_line/get_next_line.h"
+# include "../libraries/ft_printf/ft_printf.h"
 # include <fcntl.h>
 # include <string.h>
 
@@ -54,6 +55,7 @@ typedef struct s_game {
 	bool 	is_valid;	
 } t_game;
 
+int open_map_file(const char *filename);
 int close_window(t_game *game);
 int count_elements(char **map, int rows, int cols, char element);
 int key_hook(int keycode, t_game *game);
@@ -72,5 +74,7 @@ void check_accessibility(t_game *game);
 void exit_error(const char *msg);
 void check_rectangular_map(char **map, int rows, int cols);
 void check_empty_line(const char *line);
+void find_player_position(t_game *game);
+void free_visited(t_game *game, bool **visited);
 bool is_valid(t_game *game, int x, int y);
 #endif

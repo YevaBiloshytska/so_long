@@ -6,7 +6,7 @@
 /*   By: ybiloshy <ybiloshy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/22 20:44:29 by ybiloshy          #+#    #+#             */
-/*   Updated: 2024/11/22 20:45:58 by ybiloshy         ###   ########.fr       */
+/*   Updated: 2024/11/26 16:44:02 by ybiloshy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,23 @@ void free_textures(t_game *game) {
 
 void free_map(char **map, int rows)
 {
-    for (int i = 0; i < rows; i++) {
-        free(map[i]); // Освобождаем каждую строку карты
-    }
+	int i;
+
+	i = 0;
+	while(i < rows)
+	{
+		free(map[i]); // Освобождаем каждую строку карты
+		i++;
+	}
     free(map); // Освобождаем сам массив указателей
+}
+
+void free_visited(t_game *game, bool **visited)
+{
+    int i = 0;
+    while (i < game->map_rows) {
+        free(visited[i]);
+        i++;
+    }
+    free(visited);
 }

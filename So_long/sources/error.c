@@ -6,13 +6,13 @@
 /*   By: ybiloshy <ybiloshy@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/22 23:26:32 by ybiloshy          #+#    #+#             */
-/*   Updated: 2024/11/22 23:26:55 by ybiloshy         ###   ########.fr       */
+/*   Updated: 2024/11/25 15:51:40 by ybiloshy         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "so_long.h"
 
 void exit_error(const char *msg) {
-    fprintf(stderr, "%s\n", msg);
+    ft_printf(msg);
     exit(1);
 }
